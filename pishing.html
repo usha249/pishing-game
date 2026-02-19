@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cyber Fraud & Cyberbullying Master Game</title>
+
+<style>
+body{margin:0;font-family:Arial;color:white;background:linear-gradient(-45deg,#0f172a,#1e3a8a,#1e293b,#0f172a);background-size:400% 400%;animation:gradient 12s ease infinite;}
+@keyframes gradient{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+.container{max-width:1100px;margin:30px auto;background:rgba(30,41,59,0.95);padding:25px;border-radius:10px;}
+.option{background:#334155;padding:10px;margin:5px 0;border-radius:5px;cursor:pointer;}
+.option:hover{background:#475569;}
+.correct{background:#16a34a !important;}
+.wrong{background:#dc2626 !important;}
+button{padding:8px 15px;background:#3b82f6;border:none;border-radius:5px;color:white;cursor:pointer;margin-top:5px;}
+.hidden{display:none;}
+.progress{height:8px;background:#334155;border-radius:5px;overflow:hidden;}
+.progress-bar{height:100%;width:0%;background:#22c55e;}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>Cyber Fraud & Cyberbullying Master Game</h1>
+
+<input id="username" placeholder="Enter your name">
+<select id="levelSelect"></select>
+<button onclick="startQuiz()">Start Level</button>
+
+<div id="quizArea" class="hidden">
+<h3 id="question"></h3>
+<div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+<p>Time: <span id="time">15</span>s</p>
+<div id="options"></div>
+<button id="nextBtn" onclick="nextQuestion()" class="hidden">Next</button>
+</div>
+
+<div id="result" class="hidden"></div>
+
+</div>
+
+<script>
+
+// Topics
+const topics=["OTP Fraud","Loan App Fraud","Job Fraud","UPI Fraud","Phishing","Social Media Scam"];
+
+// Gift suggestions
+const giftSuggestions={
+"OTP Fraud":"Never share OTP with anyone.",
+"Loan App Fraud":"Download apps only from Play Store.",
+"Job Fraud":"Never pay money for job offers.",
+"UPI Fraud":"Never accept unknown collect requests.",
+"Phishing":"Never click unknown links.",
+"Social Media Scam":"Do not trust unknown profiles."
+};
+
+// Question Bank (MULTIPLE QUESTIONS PER TOPIC)
+let questionBank={
+"OTP Fraud":[
+ {q:"Should you share OTP with anyone?",o:["No","Yes","Sometimes","Only bank"],a:0},
+ {q:"OTP received without request?",o:["Ignore & secure account","Share","Delete phone","Forward"],a:0},
+ {q:"Bank asks OTP to reverse money?",o:["Refuse","Share","Forward","Ignore"],a:0},
+ {q:"Friend asks OTP?",o:["Do not share","Share","Send screenshot","Ignore"],a:0}
+],
+"Loan App Fraud":[
+ {q:"Download loan app from unknown link?",o:["No","Yes","Sometimes","Maybe"],a:0},
+ {q:"Loan app asks contacts access?",o:["Deny","Allow","Ignore","Share"],a:0},
+ {q:"Instant loan without documents?",o:["Scam","Safe","Government","Trusted"],a:0},
+ {q:"App threatening photos?",o:["Report","Pay","Ignore","Share OTP"],a:0}
+],
+"Job Fraud":[
+ {q:"Company asks money for job?",o:["Scam","Pay","Borrow","Ignore"],a:0},
+ {q:"Job without interview?",o:["Suspicious","Accept","Share docs","Join"],a:0},
+ {q:"Recruiter asks bank details?",o:["Refuse","Share","Ignore","Send OTP"],a:0},
+ {q:"Work from home registration fee?",o:["Avoid","Pay","Join","Trust"],a:0}
+],
+"UPI Fraud":[
+ {q:"Unknown collect request?",o:["Reject","Accept","Ignore","Forward"],a:0},
+ {q:"QR code to receive money?",o:["Scam","Scan","Share","Pay"],a:0},
+ {q:"Payment screenshot received?",o:["Check bank app","Trust","Share OTP","Ignore"],a:0},
+ {q:"UPI asks PIN to receive money?",o:["Wrong","Correct","Sometimes","Maybe"],a:0}
+],
+"Phishing":[
+ {q:"Password reset email?",o:["Ignore","Click","Reply","Forward"],a:0},
+ {q:"Free gift link?",o:["Do not click","Open","Share","Save"],a:0},
+ {q:"Account suspended message?",o:["Check official site","Click link","Share OTP","Ignore"],a:0},
+ {q:"Login page wrong URL?",o:["Do not login","Enter details","Share","Ignore"],a:0}
+],
+"Social Media Scam":[
+ {q:"Unknown friend asks money?",o:["Do not send","Send","Ignore","Share OTP"],a:0},
+ {q:"Giveaway asks OTP?",o:["Scam","Share OTP","Participate","Forward"],a:0},
+ {q:"Friend asks urgent help?",o:["Call & verify","Send money","Ignore","Share PIN"],a:0},
+ {q:"Suspicious link message?",o:["Delete","Click","Share","Save"],a:0}
+]
+};
+
+// Populate dropdown
+let levelSelect=document.getElementById("levelSelect");
+topics.forEach(t=>{
+ let opt=document.createElement("option");
+ opt.value=t; opt.textContent=t;
+ levelSelect.appendChild(opt);
+});
+
+function shuffleArray(arr){return arr.sort(()=>Math.random()-0.5);}
+
+let questionsQueue=[],current=0,score=0,currentLevel="",timer,timeLeft=15;
+
+function startQuiz(){
+currentLevel=levelSelect.value;
+questionsQueue=shuffleArray([...questionBank[currentLevel]]);
+current=0; score=0;
+document.getElementById("quizArea").classList.remove("hidden");
+document.getElementById("result").classList.add("hidden");
+loadQuestion();
+}
+
+function loadQuestion(){
+clearInterval(timer);
+timeLeft=15; document.getElementById("time").innerText=timeLeft;
+
+timer=setInterval(()=>{
+ timeLeft--;
+ document.getElementById("time").innerText=timeLeft;
+ if(timeLeft<=0){clearInterval(timer);document.getElementById("nextBtn").classList.remove("hidden");}
+},1000);
+
+let q=questionsQueue[current];
+document.getElementById("question").innerText=(current+1)+". "+q.q;
+let opts=document.getElementById("options"); opts.innerHTML="";
+q.o.forEach((text,i)=>{
+ let div=document.createElement("div");
+ div.className="option";
+ div.innerText=text;
+ div.onclick=()=>selectAnswer(div,i);
+ opts.appendChild(div);
+});
+document.getElementById("nextBtn").classList.add("hidden");
+}
+
+function selectAnswer(el,i){
+clearInterval(timer);
+let correct=questionsQueue[current].a;
+document.querySelectorAll(".option").forEach(o=>o.onclick=null);
+if(i===correct){el.classList.add("correct");score++;}
+else{el.classList.add("wrong");document.querySelectorAll(".option")[correct].classList.add("correct");}
+document.getElementById("nextBtn").classList.remove("hidden");
+}
+
+function nextQuestion(){
+current++;
+if(current<questionsQueue.length) loadQuestion();
+else finishLevel();
+}
+
+function finishLevel(){
+document.getElementById("quizArea").classList.add("hidden");
+document.getElementById("result").classList.remove("hidden");
+document.getElementById("result").innerHTML=
+"<h2>Level Completed: "+currentLevel+"</h2>"+
+"<p>Score: "+score+"/"+questionsQueue.length+"</p>"+
+"<p><b>Tip:</b> "+giftSuggestions[currentLevel]+"</p>";
+}
+</script>
+
+</body>
+</html>
